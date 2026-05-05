@@ -39,14 +39,17 @@ const { width } = Dimensions.get('window');
 
 type TabType = 'TRADES' | 'TARGET' | 'STATISTICS' | 'SETTINGS' | 'ADD_TRADE' | 'CALENDAR';
 
+/**
+ * Represents a single trade entry.
+ */
 interface Trade {
   id: string;
   type: 'Profit' | 'Loss';
   amount: number;
-  date: string;
-  time: string;
-  pair: string;
-  note?: string;
+  date: string; // ISO format (YYYY-MM-DD)
+  time: string; // HH:mm
+  pair: string; // e.g., 'XAUUSD'
+  note?: string; // Optional user notes
 }
 
 interface Targets {
@@ -55,6 +58,9 @@ interface Targets {
   Custom: number;
 }
 
+/**
+ * Details for a Prop Firm challenge (e.g., FTMO, MFF).
+ */
 interface PropFirmChallenge {
   accountSize: number;
   profitTargetPct: number;
