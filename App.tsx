@@ -1,11 +1,11 @@
 import React, { useCallback, useState } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  ScrollView, 
-  TouchableOpacity, 
-  TextInput, 
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
   Dimensions,
   Alert,
   Modal,
@@ -18,7 +18,7 @@ import { Ionicons, MaterialCommunityIcons, Entypo, FontAwesome } from '@expo/vec
 import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import * as SplashScreen from 'expo-splash-screen';
-import { 
+import {
   useFonts,
   Inter_400Regular,
   Inter_500Medium,
@@ -27,9 +27,9 @@ import {
   Inter_800ExtraBold,
 } from '@expo-google-fonts/inter';
 import { Calendar } from 'react-native-calendars';
-import { 
-  SafeAreaProvider, 
-  useSafeAreaInsets 
+import {
+  SafeAreaProvider,
+  useSafeAreaInsets
 } from 'react-native-safe-area-context';
 import { COLORS, SPACING, SIZES } from './constants/theme';
 
@@ -39,17 +39,14 @@ const { width } = Dimensions.get('window');
 
 type TabType = 'TRADES' | 'TARGET' | 'STATISTICS' | 'SETTINGS' | 'ADD_TRADE' | 'CALENDAR';
 
-/**
- * Represents a single trade entry.
- */
 interface Trade {
   id: string;
   type: 'Profit' | 'Loss';
   amount: number;
-  date: string; // ISO format (YYYY-MM-DD)
-  time: string; // HH:mm
-  pair: string; // e.g., 'XAUUSD'
-  note?: string; // Optional user notes
+  date: string;
+  time: string;
+  pair: string;
+  note?: string;
 }
 
 interface Targets {
@@ -58,9 +55,6 @@ interface Targets {
   Custom: number;
 }
 
-/**
- * Details for a Prop Firm challenge (e.g., FTMO, MFF).
- */
 interface PropFirmChallenge {
   accountSize: number;
   profitTargetPct: number;
@@ -113,7 +107,7 @@ function MainApp() {
   // Load data on mount (only if logged in)
   React.useEffect(() => {
     if (!session || !isSupabaseConfigured()) return;
-    
+
     const loadData = async () => {
       try {
         // Load Trades
@@ -168,7 +162,7 @@ function MainApp() {
   const updateTargets = async (newTargets: React.SetStateAction<Targets>) => {
     const resolvedTargets = typeof newTargets === 'function' ? newTargets(targets) : newTargets;
     setTargets(resolvedTargets);
-    
+
     if (session?.user?.id && isSupabaseConfigured()) {
       const { error } = await supabase
         .from('targets')
@@ -179,7 +173,7 @@ function MainApp() {
           custom_target: resolvedTargets.Custom,
           updated_at: new Date().toISOString()
         }, { onConflict: 'user_id' });
-      
+
       if (error) console.error('Error syncing targets', error);
     }
   };
@@ -188,7 +182,7 @@ function MainApp() {
   const updatePropFirm = async (pf: React.SetStateAction<PropFirmChallenge | null>) => {
     const resolvedPf = typeof pf === 'function' ? pf(propFirm) : pf;
     setPropFirm(resolvedPf);
-    
+
     if (session?.user?.id && isSupabaseConfigured()) {
       if (resolvedPf) {
         const { error } = await supabase
@@ -204,7 +198,7 @@ function MainApp() {
             start_date: resolvedPf.startDate,
             updated_at: new Date().toISOString()
           }, { onConflict: 'user_id' });
-        
+
         if (error) console.error('Error syncing prop firm', error);
       } else {
         await supabase.from('prop_firm').delete().eq('user_id', session.user.id);
@@ -266,20 +260,20 @@ function MainApp() {
     switch (activeTab) {
       case 'TRADES':
         return (
-          <TradesScreen 
+          <TradesScreen
             trades={trades}
             targets={targets}
-            onAdd={() => setActiveTab('ADD_TRADE')} 
+            onAdd={() => setActiveTab('ADD_TRADE')}
             onFlash={() => {
               setActiveTab('ADD_TRADE');
               setShowTypeModal(true);
-            }} 
+            }}
             onCalendar={() => setActiveTab('CALENDAR')}
           />
         );
       case 'CALENDAR':
         return (
-          <CalendarScreen 
+          <CalendarScreen
             trades={trades}
             onBack={() => setActiveTab('TRADES')}
             onAddForDate={(date) => {
@@ -290,8 +284,8 @@ function MainApp() {
         );
       case 'ADD_TRADE':
         return (
-          <AddTradeScreen 
-            onBack={() => setActiveTab('TRADES')} 
+          <AddTradeScreen
+            onBack={() => setActiveTab('TRADES')}
             onSave={handleSaveTrade}
             tradeType={tradeType}
             setTradeType={setTradeType}
@@ -307,44 +301,50 @@ function MainApp() {
       case 'SETTINGS':
         return <SettingsScreen userEmail={session?.user?.email || ''} onLogout={() => supabase.auth.signOut()} />;
       default:
-        return <TradesScreen />;
+        return <TradesScreen trades={[]} targets={undefined} onAdd={function (): void {
+          throw new Error('Function not implemented.');
+        }} onFlash={function (): void {
+          throw new Error('Function not implemented.');
+        }} onCalendar={function (): void {
+          throw new Error('Function not implemented.');
+        }} />;
     }
   };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]} onLayout={onLayoutRootView}>
       <StatusBar style="dark" />
-      
+
       {renderContent()}
 
       {/* Bottom Tab Bar */}
       {session && activeTab !== 'ADD_TRADE' && activeTab !== 'CALENDAR' && (
         <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, SPACING.md) }]}>
-          <TabItem 
-            icon="home-variant" 
-            label="TRADES" 
-            active={activeTab === 'TRADES'} 
+          <TabItem
+            icon="home-variant"
+            label="TRADES"
+            active={activeTab === 'TRADES'}
             onPress={() => setActiveTab('TRADES')}
             provider="MaterialCommunityIcons"
           />
-          <TabItem 
-            icon="target" 
-            label="TARGET" 
-            active={activeTab === 'TARGET'} 
+          <TabItem
+            icon="target"
+            label="TARGET"
+            active={activeTab === 'TARGET'}
             onPress={() => setActiveTab('TARGET')}
             provider="MaterialCommunityIcons"
           />
-          <TabItem 
-            icon="view-grid-outline" 
-            label="STATISTICS" 
-            active={activeTab === 'STATISTICS'} 
+          <TabItem
+            icon="view-grid-outline"
+            label="STATISTICS"
+            active={activeTab === 'STATISTICS'}
             onPress={() => setActiveTab('STATISTICS')}
             provider="MaterialCommunityIcons"
           />
-          <TabItem 
-            icon="cog-outline" 
-            label="SETTINGS" 
-            active={activeTab === 'SETTINGS'} 
+          <TabItem
+            icon="cog-outline"
+            label="SETTINGS"
+            active={activeTab === 'SETTINGS'}
             onPress={() => setActiveTab('SETTINGS')}
             provider="MaterialCommunityIcons"
           />
@@ -364,22 +364,22 @@ function ProgressBar({ current, target, color = COLORS.primary }: { current: num
   );
 }
 
-function TradesScreen({ 
-  trades, 
+function TradesScreen({
+  trades,
   targets,
-  onAdd, 
+  onAdd,
   onFlash,
   onCalendar
-}: { 
-  trades: Trade[], 
+}: {
+  trades: Trade[],
   targets: Targets,
-  onAdd: () => void, 
+  onAdd: () => void,
   onFlash: () => void,
   onCalendar: () => void
 }) {
   const insets = useSafeAreaInsets();
-  const todayDate = new Date().toISOString().split('T')[0]; 
-  const displayDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });  
+  const todayDate = new Date().toISOString().split('T')[0];
+  const displayDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   const totalBalance = trades.reduce((acc, trade) => {
     return trade.type === 'Profit' ? acc + trade.amount : acc - trade.amount;
   }, 0);
@@ -400,7 +400,7 @@ function TradesScreen({
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
@@ -445,13 +445,13 @@ function TradesScreen({
           <Text style={[styles.dailyBalance, { color: todayBalance >= 0 ? COLORS.primary : COLORS.error }]}>
             $ {todayBalance.toFixed(2)}
           </Text>
-          
+
           {targets.Daily > 0 && (
             <View style={{ marginBottom: 15 }}>
-              <ProgressBar 
-                current={todayBalance} 
-                target={targets.Daily} 
-                color={todayBalance >= targets.Daily ? COLORS.success : COLORS.primary} 
+              <ProgressBar
+                current={todayBalance}
+                target={targets.Daily}
+                color={todayBalance >= targets.Daily ? COLORS.success : COLORS.primary}
               />
               <Text style={styles.progressPercentage}>
                 {Math.round(Math.min(todayBalance / targets.Daily, 1) * 100)}% of daily goal
@@ -488,8 +488,8 @@ function TradesScreen({
               <Text style={styles.tradePairText}>{trade.pair}</Text>
             </View>
             <View style={styles.tradeCardMain}>
-               <Text style={[
-                styles.tradeAmountSmall, 
+              <Text style={[
+                styles.tradeAmountSmall,
                 { color: trade.type === 'Profit' ? COLORS.success : COLORS.error }
               ]}>
                 {trade.type === 'Profit' ? '+' : '-'} $ {trade.amount.toFixed(2)}
@@ -509,15 +509,15 @@ function TradesScreen({
 
       {/* Floating Action Buttons */}
       <View style={[styles.fabContainer, { bottom: 20 }]}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.fab, styles.fabPlus]}
           activeOpacity={0.8}
           onPress={onAdd}
         >
           <Ionicons name="add" size={32} color={COLORS.white} />
         </TouchableOpacity>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={[styles.fab, styles.fabFlash]}
           activeOpacity={0.8}
           onPress={onFlash}
@@ -529,16 +529,16 @@ function TradesScreen({
   );
 }
 
-function AddTradeScreen({ 
-  onBack, 
+function AddTradeScreen({
+  onBack,
   onSave,
-  tradeType, 
+  tradeType,
   setTradeType,
   showTypeModal,
   setShowTypeModal,
   initialDate
-}: { 
-  onBack: () => void, 
+}: {
+  onBack: () => void,
   onSave: (t: Omit<Trade, 'id'>) => void,
   tradeType: 'Profit' | 'Loss',
   setTradeType: (t: 'Profit' | 'Loss') => void,
@@ -556,12 +556,12 @@ function AddTradeScreen({
       Alert.alert('Error', 'Please enter an amount.');
       return;
     }
-    
+
     onSave({
       type: tradeType,
       amount: parseFloat(amount) || 0,
       date: initialDate,
-      time: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }), 
+      time: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
       pair: pair || 'N/A',
       note: note
     });
@@ -580,13 +580,13 @@ function AddTradeScreen({
       <ScrollView contentContainerStyle={styles.addTradeContent} showsVerticalScrollIndicator={false}>
         {/* Type Toggle */}
         <View style={styles.typeToggleContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.typeToggle, tradeType === 'Profit' && styles.typeToggleActiveProfit]}
             onPress={() => setTradeType('Profit')}
           >
             <Text style={[styles.typeToggleText, tradeType === 'Profit' && styles.typeToggleTextActive]}>Profit</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.typeToggle, tradeType === 'Loss' && styles.typeToggleActiveLoss]}
             onPress={() => setTradeType('Loss')}
           >
@@ -613,19 +613,19 @@ function AddTradeScreen({
         {/* Trading Pair & Margin Row */}
         <View style={styles.inputRow}>
           <View style={[styles.inputGroup, { flex: 1, marginRight: SPACING.sm }]}>
-            <TextInput 
-              style={styles.inputField} 
-              placeholder="Trading Pair" 
-              placeholderTextColor={COLORS.textMuted} 
+            <TextInput
+              style={styles.inputField}
+              placeholder="Trading Pair"
+              placeholderTextColor={COLORS.textMuted}
               value={pair}
               onChangeText={setPair}
             />
           </View>
           <View style={[styles.inputGroup, { flex: 1, marginLeft: SPACING.sm }]}>
-            <TextInput 
-              style={styles.inputField} 
-              placeholder="Margin/Strike" 
-              placeholderTextColor={COLORS.textMuted} 
+            <TextInput
+              style={styles.inputField}
+              placeholder="Margin/Strike"
+              placeholderTextColor={COLORS.textMuted}
               value={margin}
               onChangeText={setMargin}
             />
@@ -634,9 +634,9 @@ function AddTradeScreen({
 
         {/* Note */}
         <View style={styles.inputGroup}>
-          <TextInput 
-            style={[styles.inputField, { height: 80, textAlignVertical: 'top' }]} 
-            placeholder="Note" 
+          <TextInput
+            style={[styles.inputField, { height: 80, textAlignVertical: 'top' }]}
+            placeholder="Note"
             placeholderTextColor={COLORS.textMuted}
             multiline
             value={note}
@@ -647,9 +647,9 @@ function AddTradeScreen({
         {/* Amount */}
         <View style={styles.inputGroup}>
           <View style={styles.amountInputContainer}>
-            <TextInput 
-              style={[styles.inputField, { flex: 1 }]} 
-              placeholder="Amount *" 
+            <TextInput
+              style={[styles.inputField, { flex: 1 }]}
+              placeholder="Amount *"
               placeholderTextColor={COLORS.textMuted}
               keyboardType="numeric"
               value={amount}
@@ -682,15 +682,15 @@ function AddTradeScreen({
         animationType="slide"
         onRequestClose={() => setShowTypeModal(false)}
       >
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
           onPress={() => setShowTypeModal(false)}
         >
           <View style={styles.bottomSheet}>
             <Text style={styles.modalTitle}>Select a type</Text>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={[styles.modalItem, { backgroundColor: COLORS.successBg }]}
               onPress={() => {
                 setTradeType('Profit');
@@ -704,7 +704,7 @@ function AddTradeScreen({
               <Entypo name="chevron-right" size={20} color={COLORS.success} />
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.modalItem, { backgroundColor: COLORS.errorBg }]}
               onPress={() => {
                 setTradeType('Loss');
@@ -724,30 +724,30 @@ function AddTradeScreen({
   );
 }
 
-function TabItem({ 
-  icon, 
-  label, 
-  active, 
+function TabItem({
+  icon,
+  label,
+  active,
   onPress,
   provider = 'Ionicons'
-}: { 
-  icon: any, 
-  label: string, 
-  active?: boolean, 
+}: {
+  icon: any,
+  label: string,
+  active?: boolean,
   onPress: () => void,
   provider?: 'Ionicons' | 'MaterialCommunityIcons'
 }) {
   const IconComponent = provider === 'MaterialCommunityIcons' ? MaterialCommunityIcons : Ionicons;
-  
+
   return (
     <TouchableOpacity style={styles.tabItem} onPress={onPress} activeOpacity={0.7}>
-      <IconComponent 
-        name={icon} 
-        size={24} 
-        color={active ? COLORS.primary : COLORS.textMuted} 
+      <IconComponent
+        name={icon}
+        size={24}
+        color={active ? COLORS.primary : COLORS.textMuted}
       />
       <Text style={[
-        styles.tabLabel, 
+        styles.tabLabel,
         { color: active ? COLORS.primary : COLORS.textMuted }
       ]}>
         {label}
@@ -756,22 +756,22 @@ function TabItem({
   );
 }
 
-function CalendarScreen({ 
-  trades, 
-  onBack, 
-  onAddForDate 
-}: { 
-  trades: Trade[], 
-  onBack: () => void, 
-  onAddForDate: (date: string) => void 
+function CalendarScreen({
+  trades,
+  onBack,
+  onAddForDate
+}: {
+  trades: Trade[],
+  onBack: () => void,
+  onAddForDate: (date: string) => void
 }) {
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState('');
 
   const markedDates = trades.reduce((acc: any, trade) => {
-    acc[trade.date] = { 
-      marked: true, 
-      dotColor: trade.type === 'Profit' ? COLORS.success : COLORS.error 
+    acc[trade.date] = {
+      marked: true,
+      dotColor: trade.type === 'Profit' ? COLORS.success : COLORS.error
     };
     return acc;
   }, {});
@@ -814,7 +814,7 @@ function CalendarScreen({
             {selected ? `Trades for ${selected}` : 'Select a date'}
           </Text>
           {selected && (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.calendarAddButton}
               onPress={() => onAddForDate(selected)}
             >
@@ -848,7 +848,7 @@ function StatisticsScreen({ trades }: { trades: Trade[] }) {
   const wins = trades.filter(t => t.type === 'Profit').length;
   const losses = totalTrades - wins;
   const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
-  
+
   const totalProfit = trades.filter(t => t.type === 'Profit').reduce((a, t) => a + t.amount, 0);
   const totalLoss = trades.filter(t => t.type === 'Loss').reduce((a, t) => a + t.amount, 0);
   const netProfit = totalProfit - totalLoss;
@@ -863,7 +863,7 @@ function StatisticsScreen({ trades }: { trades: Trade[] }) {
         <Text style={styles.headerTitle}>Statistics</Text>
       </View>
 
-      <ScrollView 
+      <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
@@ -909,12 +909,12 @@ function StatisticsScreen({ trades }: { trades: Trade[] }) {
               <Text style={[st.breakdownValue, { color: COLORS.error }]}>{losses}</Text>
             </View>
           </View>
-          
+
           <View style={st.barContainer}>
             <View style={[st.barFill, { flex: wins, backgroundColor: COLORS.success }]} />
             <View style={[st.barFill, { flex: losses, backgroundColor: COLORS.error }]} />
           </View>
-          
+
           <View style={st.avgRow}>
             <View>
               <Text style={st.avgLabel}>Avg Win</Text>
@@ -1077,14 +1077,14 @@ const st = StyleSheet.create({
 });
 
 
-function AddTargetModal({ 
-  visible, 
-  onClose, 
+function AddTargetModal({
+  visible,
+  onClose,
   type,
   setTargets
-}: { 
-  visible: boolean, 
-  onClose: () => void, 
+}: {
+  visible: boolean,
+  onClose: () => void,
   type: string,
   setTargets: React.Dispatch<React.SetStateAction<Targets>>
 }) {
@@ -1097,19 +1097,19 @@ function AddTargetModal({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <TouchableOpacity 
-        style={styles.modalOverlay} 
-        activeOpacity={1} 
+      <TouchableOpacity
+        style={styles.modalOverlay}
+        activeOpacity={1}
         onPress={onClose}
       >
         <View style={styles.bottomSheet}>
           <Text style={styles.modalTitle}>Set {type} Target</Text>
-          
+
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Target Amount ($) *</Text>
-            <TextInput 
-              style={styles.inputField} 
-              placeholder="0.00" 
+            <TextInput
+              style={styles.inputField}
+              placeholder="0.00"
               placeholderTextColor={COLORS.textMuted}
               keyboardType="numeric"
               value={targetAmount}
@@ -1118,8 +1118,8 @@ function AddTargetModal({
             />
           </View>
 
-          <TouchableOpacity 
-            style={[styles.saveButton, { backgroundColor: COLORS.primary }]} 
+          <TouchableOpacity
+            style={[styles.saveButton, { backgroundColor: COLORS.primary }]}
             onPress={() => {
               if (targetAmount) {
                 setTargets(prev => ({ ...prev, [type]: parseFloat(targetAmount) }));
@@ -1139,9 +1139,9 @@ function AddTargetModal({
   );
 }
 
-function PropFirmSetupModal({ visible, onClose, onSave }: { 
-  visible: boolean, onClose: () => void, 
-  onSave: (c: PropFirmChallenge) => void 
+function PropFirmSetupModal({ visible, onClose, onSave }: {
+  visible: boolean, onClose: () => void,
+  onSave: (c: PropFirmChallenge) => void
 }) {
   const [challengeType, setChallengeType] = useState<'One Step' | 'Two Step' | 'Zero'>('Two Step');
   const [model, setModel] = useState<'FundingPips' | 'FundingPips Pro'>('FundingPips');
@@ -1262,7 +1262,7 @@ function PropFirmDashboard({ challenge, trades, onReset }: { challenge: PropFirm
   return (
     <ScrollView contentContainerStyle={{ padding: SIZES.padding, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
       {/* Status Banner */}
-      <View style={[pf.statusBanner, { borderLeftColor: statusColor }]}>  
+      <View style={[pf.statusBanner, { borderLeftColor: statusColor }]}>
         <View style={{ flex: 1 }}>
           <Text style={pf.statusLabel}>Phase {challenge.phase} • {challenge.startDate}</Text>
           <Text style={pf.statusAccount}>${challenge.accountSize.toLocaleString()} Account</Text>
@@ -1351,7 +1351,7 @@ function PropFirmDashboard({ challenge, trades, onReset }: { challenge: PropFirm
   );
 }
 
-function TargetScreen({ targets, setTargets, trades, propFirm, setPropFirm, onResetPropFirm }: { 
+function TargetScreen({ targets, setTargets, trades, propFirm, setPropFirm, onResetPropFirm }: {
   targets: Targets, setTargets: React.Dispatch<React.SetStateAction<Targets>>,
   trades: Trade[], propFirm: PropFirmChallenge | null,
   setPropFirm: React.Dispatch<React.SetStateAction<PropFirmChallenge | null>>,
@@ -1429,7 +1429,7 @@ function TargetScreen({ targets, setTargets, trades, propFirm, setPropFirm, onRe
       )}
 
       {/* FAB */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={[styles.fab, styles.fabPlus, styles.targetFab]}
         activeOpacity={0.8}
         onPress={() => activeTab === 'Custom' && propFirm ? onResetPropFirm() : activeTab === 'Custom' ? setShowPropFirmSetup(true) : setShowAddModal(true)}
@@ -2225,7 +2225,7 @@ function SettingsScreen({ userEmail, onLogout }: { userEmail: string, onLogout: 
         <Text style={styles.headerTitle}>Settings</Text>
       </View>
 
-      <ScrollView 
+      <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
@@ -2304,9 +2304,9 @@ function AuthScreen() {
           skipBrowserRedirect: true, // This allows us to handle the redirect manually in React Native
         },
       });
-      
+
       if (error) throw error;
-      
+
       if (data?.url) {
         // Open the Google login page in the device's browser
         const supported = await Linking.canOpenURL(data.url);
@@ -2357,8 +2357,8 @@ function AuthScreen() {
         <View style={{ gap: 16 }}>
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Email Address</Text>
-            <TextInput 
-              style={styles.inputField} 
+            <TextInput
+              style={styles.inputField}
               placeholder="name@example.com"
               value={email}
               onChangeText={setEmail}
@@ -2369,8 +2369,8 @@ function AuthScreen() {
 
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Password</Text>
-            <TextInput 
-              style={styles.inputField} 
+            <TextInput
+              style={styles.inputField}
               placeholder="••••••••"
               value={password}
               onChangeText={setPassword}
@@ -2378,8 +2378,8 @@ function AuthScreen() {
             />
           </View>
 
-          <TouchableOpacity 
-            style={[styles.saveButton, { backgroundColor: COLORS.primary, marginTop: 10 }]} 
+          <TouchableOpacity
+            style={[styles.saveButton, { backgroundColor: COLORS.primary, marginTop: 10 }]}
             onPress={handleAuth}
             disabled={loading}
           >
@@ -2392,8 +2392,8 @@ function AuthScreen() {
             <View style={{ flex: 1, height: 1, backgroundColor: '#EEE' }} />
           </View>
 
-          <TouchableOpacity 
-            style={[styles.saveButton, { backgroundColor: COLORS.white, borderWidth: 1, borderColor: '#EEE', marginTop: 0 }]} 
+          <TouchableOpacity
+            style={[styles.saveButton, { backgroundColor: COLORS.white, borderWidth: 1, borderColor: '#EEE', marginTop: 0 }]}
             onPress={signInWithGoogle}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
