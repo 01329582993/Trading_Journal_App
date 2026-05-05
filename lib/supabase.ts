@@ -1,3 +1,7 @@
+/**
+ * Supabase Client Configuration
+ * Initialized with project-specific URL and Anonymous Key.
+ */
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = 'https://dgctvunkbuvbmpqroedm.supabase.co';
